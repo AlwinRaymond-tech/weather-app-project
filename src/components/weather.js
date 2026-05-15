@@ -10,19 +10,41 @@ function Weather() {
   const API_KEY = process.env.REACT_APP_WEATHER_API_KEY;
 
   const getWeather = async () => {
-    if (!city) return;
+    if (!city.trim()) {
+      setError("Please enter a city");
+      setWeather(null);
+      return;
+    }
 
     try {
       setError("");
 
+      console.log("API KEY:", API_KEY);
+
       const response = await axios.get(
-        `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`
+        "https://api.openweathermap.org/data/2.5/weather",
+        {
+          params: {
+            q: city,
+            appid: API_KEY,
+            units: "metric",
+          },
+        }
       );
 
       setWeather(response.data);
     } catch (err) {
+      console.log(err);
+
       setWeather(null);
-      setError("City not found");
+
+      if (err.response?.status === 404) {
+        setError("City not found");
+      } else if (err.response?.status === 401) {
+        setError("Invalid API key");
+      } else {
+        setError("Something went wrong");
+      }
     }
   };
 
@@ -51,7 +73,7 @@ function Weather() {
               {weather.name}, {weather.sys.country}
             </h2>
 
-            <h3>{weather.main.temp} °C</h3>
+            <h3>{Math.round(weather.main.temp)} °C</h3>
 
             <p>{weather.weather[0].description}</p>
 
